@@ -13,7 +13,7 @@ done
 # install knative
 kubectl apply -f https://storage.googleapis.com/knative-releases/latest/release.yaml
 # wait until each knative pod is up
-while kubectl get pods -n knative-serving-system | grep -v -E "(Running|Completed|STATUS)"; do
+while kubectl get pods -n knative-serving | grep -v -E "(Running|Completed|STATUS)"; do
     sleep 5
 done
 
