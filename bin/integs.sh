@@ -3,22 +3,24 @@
 set -v
 
 SCRIPTDIR=$(cd $(dirname "$0") && pwd)
-ROOTDIR="$SCRIPTDIR/../"
-cd $ROOTDIR
+ROOTDIR="$SCRIPTDIR/.."
 
+OWSK_HOME=$ROOTDIR/openwhisk
 KWSK_HOME=$1
 
-git clone https://github.com/apache/incubator-openwhisk.git
-sed -e "s:/home/jim/src:$PWD:" <whisk.properties >incubator-openwhisk/whisk.properties
-
+if [ ! -d "$OWSK_HOME" ]; then
+  git clone https://github.com/apache/incubator-openwhisk.git $OWSK_HOME
+  sed -e "s:OPENWHISK_HOME:$OWSK_HOME:" <$ROOTDIR/whisk.properties >$OWSK_HOME/whisk.properties
+fi
 go run ${KWSK_HOME}cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 >kwsk.log 2>&1 &
 KWSK_PID=$!
 
-pushd incubator-openwhisk
+pushd $OWSK_HOME
 ./gradlew :tests:test --tests "system.basic.WskRest*"
 STATUS=$?
 popd
 
-kill -- "-${KWSK_PID}"
+ps -f
+kill -- "-$KWSK_PID"
 
 exit $STATUS

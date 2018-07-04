@@ -38,6 +38,6 @@ script:
 - ./bin/integs.sh ../../projectodd/kwsk/
 
 after_failure:
-- echo "############# FAILURE #############"
+- echo "************* FAILURE *************"
 - cat kwsk.log
 
