@@ -12,7 +12,7 @@ before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -qq ansible
 
-before_script:
+install:
 # Make root mounted as rshared to fix kube-dns issues.
 - sudo mount --make-rshared /
 # Download kubectl, which is a requirement for using minikube.
@@ -29,6 +29,8 @@ before_script:
 - pushd incubator-openwhisk/ansible && ansible-playbook -i environments/local -e docker_image_prefix=testing properties.yml && popd
 - git clone https://github.com/projectodd/kwsk.git
 - pushd kwsk && dep ensure && popd
+
+before_script:
 - go run ./kwsk/cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 >kwsk.log 2>&1 &
 
 script:
