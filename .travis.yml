@@ -1,14 +1,20 @@
+dist: trusty
 sudo: required
+
+language: go
 
 # This moves Kubernetes specific config files.
 env:
 - CHANGE_MINIKUBE_NONE_USER=true
 
-before_script:
+before_install:
 - echo -e "machine github.com\n  login $CI_USER_TOKEN" > ~/.netrc
+- sudo apt-get update -qq
+- sudo apt-get install -qq ansible
+
+before_script:
 # Make root mounted as rshared to fix kube-dns issues.
 - sudo mount --make-rshared /
-- sudo apt-get install ansible
 # Download kubectl, which is a requirement for using minikube.
 - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.10.4/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 # Download minikube.
@@ -19,17 +25,17 @@ before_script:
 - minikube update-context
 # Wait for Kubernetes to be up and ready.
 - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
-- git clone https://github.com/projectodd/kwsk.git
-- pushd kwsk
-- dep ensure
-- go run ./cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 &
-- popd
-- git clone https://github.com/apache/incubator-openwhisk.git
+- ./bin/install.sh
 - pushd incubator-openwhisk/ansible && ansible-playbook -i environments/local -e docker_image_prefix=testing properties.yml && popd
+- git clone https://github.com/projectodd/kwsk.git
+- pushd kwsk && dep ensure && popd
+- go run ./kwsk/cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 >kwsk.log 2>&1 &
 
 script:
 # Create example Redis deployment on Kubernetes.
 - kubectl cluster-info 
 - kubectl run travis-example --image=redis
 - kubectl get deployment
-- ./bin/install.sh
+
+after_failure:
+- cat kwsk.log
