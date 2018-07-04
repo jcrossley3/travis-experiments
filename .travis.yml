@@ -41,14 +41,15 @@ before_script:
 - go run ./kwsk/cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 >kwsk.log 2>&1 &
 
 script:
-# Create example Redis deployment on Kubernetes.
-- kubectl cluster-info 
-- kubectl run travis-example --image=redis
-- kubectl get deployment
-
-after_failure:
-- cat kwsk.log
+- pushd incubator-openwhisk
+- ./gradlew :tests:test --tests "system.basic.WskRest*"
+- popd
 
 after_script:
-- echo "#################################"
-- cat incubator-openwhisk/whisk.properties
+- jobs
+- kill %1
+
+after_failure:
+- echo "############# FAILURE #############"
+- cat kwsk.log
+
