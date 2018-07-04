@@ -38,7 +38,7 @@ install:
 - pushd ../../projectodd/kwsk && dep ensure && popd
 
 before_script:
-- go run ./kwsk/cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 >kwsk.log 2>&1 &
+- go run ../../projectodd/kwsk/cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 >kwsk.log 2>&1 &
 
 script:
 - pushd incubator-openwhisk
