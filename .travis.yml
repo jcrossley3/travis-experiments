@@ -10,6 +10,8 @@ env:
 before_install:
 - echo -e "machine github.com\n  login $CI_USER_TOKEN" > ~/.netrc
 - sudo apt-get update -qq
+- curl -L -s https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 -o $GOPATH/bin/dep
+- chmod +x $GOPATH/bin/dep
 # - sudo apt-get install -qq ansible
 
 install:
@@ -27,12 +29,13 @@ install:
 - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
 # Clone tester and testee
 - git clone https://github.com/apache/incubator-openwhisk.git
-- git clone https://github.com/projectodd/kwsk.git
+- mkdir -p ../../projectodd
+- git clone https://github.com/projectodd/kwsk.git ../../projectodd/kwsk
 # Install and configure
 - ./bin/install.sh
 - cp whisk.properties incubator-openwhisk/
 - perl -p -i -e "s:/home/jim/src:$PWD:" incubator-openwhisk/whisk.properties
-- pushd kwsk && dep ensure && popd
+- pushd ../../projectodd/kwsk && dep ensure && popd
 
 before_script:
 - go run ./kwsk/cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 >kwsk.log 2>&1 &
