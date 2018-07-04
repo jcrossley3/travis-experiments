@@ -27,27 +27,15 @@ install:
 - minikube update-context
 # Wait for Kubernetes to be up and ready.
 - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
-# Clone tester and testee
-- git clone https://github.com/apache/incubator-openwhisk.git
+# TODO: unnecessary when in kwsk/.travis.yml
 - mkdir -p ../../projectodd
 - git clone https://github.com/projectodd/kwsk.git ../../projectodd/kwsk
-# Install and configure
-- ./bin/install.sh
-- cp whisk.properties incubator-openwhisk/
-- perl -p -i -e "s:/home/jim/src:$PWD:" incubator-openwhisk/whisk.properties
 - pushd ../../projectodd/kwsk && dep ensure && popd
-
-before_script:
-- go run ../../projectodd/kwsk/cmd/kwsk-server/main.go --port 8080 --istio $(minikube ip):32000 >kwsk.log 2>&1 &
+# Install and configure native
+- ./bin/install.sh
 
 script:
-- pushd incubator-openwhisk
-- ./gradlew :tests:test --tests "system.basic.WskRest*"
-- popd
-
-after_script:
-- jobs
-- kill %1
+- ./bin/integs.sh ../../projectodd/kwsk/
 
 after_failure:
 - echo "############# FAILURE #############"
